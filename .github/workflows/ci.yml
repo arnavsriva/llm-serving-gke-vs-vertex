@@ -1,0 +1,64 @@
+---
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    name: lint + unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - name: Set up Python 3.11 env
+        run: |
+          uv venv --python 3.11 .venv
+          uv pip install --python .venv/bin/python -e ".[dev]"
+      - name: ruff
+        run: |
+          .venv/bin/ruff check .
+          .venv/bin/ruff format --check .
+      - name: yamllint
+        run: .venv/bin/yamllint -s .
+      - name: pytest
+        run: .venv/bin/pytest
+
+  terraform:
+    name: terraform fmt + validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+      - name: fmt
+        run: terraform fmt -check -recursive infra/terraform
+      - name: validate (no backend, no credentials)
+        working-directory: infra/terraform/envs/dev
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+  kubeconform:
+    name: validate k8s manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz \
+            | tar xz -C /usr/local/bin kubeconform
+      - name: kubeconform
+        run: |
+          files=$(find k8s -type f \( -name '*.yaml' -o -name '*.yml' \))
+          if [ -z "$files" ]; then
+            echo "No manifests yet; skipping."
+            exit 0
+          fi
+          kubeconform -strict -summary -ignore-missing-schemas $files

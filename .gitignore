@@ -1,0 +1,80 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# --- Virtual envs ---
+.venv/
+venv/
+env/
+
+# --- Env / secrets / credentials ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*credentials*.json
+*service-account*.json
+*-sa-key*.json
+application_default_credentials.json
+kubeconfig*
+.kube/
+
+# --- Terraform ---
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# --- Model weights / checkpoints ---
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.gguf
+*.onnx
+models/
+checkpoints/
+finetune/outputs/
+finetune/runs/
+wandb/
+hf_cache/
+
+# --- Large result dumps (keep summaries, CSVs and plots) ---
+results/**/raw/
+results/**/*.jsonl
+results/**/*.parquet
+results/**/*.tar.gz
+
+# --- Local-only AI assistant notes ---
+CLAUDE.md
+.claude/
+
+# --- OS / editors ---
+.DS_Store
+.idea/
+.vscode/
+*.swp

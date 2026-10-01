@@ -1,0 +1,15 @@
+# Copy to terraform.tfvars and fill in. terraform.tfvars is gitignored.
+
+project_id   = "your-project-id"
+region       = "us-central1"
+zone         = "us-central1-a"
+cluster_name = "llm-serving-dev"
+
+# GPU node pool (Spot, scale-to-zero)
+gpu_machine_type   = "g2-standard-8"
+gpu_type           = "nvidia-l4"
+gpu_count_per_node = 1
+gpu_pool_min_nodes = 0
+gpu_pool_max_nodes = 1
+
+artifact_registry_repo = "llm-serving"
