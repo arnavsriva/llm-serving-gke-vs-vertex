@@ -5,7 +5,8 @@
 > LoRA fine-tuning and a debugging playbook of real, reproduced failures.
 
 **Status:** 🚧 Load generator validated against a CPU mock server; Kubernetes manifests validated
-on a local kind cluster. No GPU benchmarks have been run yet. Every number in this README comes
+on a local kind cluster; GKE infrastructure built with Terraform and verified on a real cluster
+(GPU nodes pending a billing-account upgrade). No GPU benchmarks have been run yet. Every number in this README comes
 from a saved run in [`results/`](results/).
 
 ---
@@ -26,14 +27,36 @@ Vertex AI endpoint?"* This repo answers it with measurements rather than opinion
 
 ## Architecture
 
-_TODO (Phase: infra)._ Diagram of:
+```mermaid
+flowchart LR
+    dev["laptop: kubectl, make"] -- "DNS endpoint (IAM)" --> cp["GKE control plane<br/>(zonal, us-central1-a)"]
+    subgraph vpc["VPC: private nodes, no external IPs"]
+        subgraph cpu["cpu pool: 1 x e2-standard-4"]
+            bench["bench-client pod<br/>(load generator)"]
+        end
+        subgraph gpu["gpu-l4-spot pool: Spot g2-standard-8 + L4, 0-1 nodes<br/>taint nvidia.com/gpu"]
+            server["vLLM or SGLang<br/>(one at a time)"]
+        end
+    end
+    bench -- "ClusterIP Service" --> server
+    bench -. "Workload Identity" .-> vertex["Vertex AI endpoint<br/>(vLLM container)"]
+    gpu -- "image pull + streaming" --> ar["Artifact Registry<br/>llm-serving, dockerhub proxy"]
+    server -- "Cloud NAT" --> hf["Hugging Face<br/>(model weights)"]
+    gmp["Managed Prometheus + DCGM"] -. scrape .-> server
+```
 
-- GKE Standard cluster with a default CPU pool and a separate **spot L4 GPU node pool** (autoscaling,
-  min 0), tainted so only inference pods land there.
-- vLLM and SGLang Deployments behind ClusterIP Services; queue-depth HPA; PodDisruptionBudgets.
-- Artifact Registry for images; Workload Identity for pod → GCP access.
-- Vertex AI Model Registry → Endpoint running the custom vLLM container.
-- Load generator in a pod on the CPU pool: one client location for all three targets.
+- **GKE Standard, zonal**, with a single on-demand CPU node and a **Spot L4 node pool that
+  autoscales from 0**. GKE's GPU taint keeps everything but the inference server off it.
+- **vLLM and SGLang** run as Deployments behind ClusterIP Services, with `/health` probes, a
+  disruption budget and an optional queue-depth HPA ([`k8s/README.md`](k8s/README.md)).
+- **Load generator in the cluster.** It runs on the CPU pool, the same client location for all
+  three targets.
+- **Identity.** Pods call Google APIs through Workload Identity Federation, with roles granted to
+  their Kubernetes service accounts; no keys anywhere.
+- **Infrastructure as code.** All of it is Terraform ([`infra/terraform/README.md`](infra/terraform/README.md)),
+  with a $90 budget alert. `make gke-verify` checks a fresh cluster without a GPU: node pools,
+  endpoint lockdown, Workload Identity allow and deny, registry pulls, NAT egress
+  ([log of the first run](results/validation/gke/20261006T161339Z_gke_verify.txt)).
 
 ## Quickstart
 
@@ -185,11 +208,24 @@ Reproduced failures, each written up as a postmortem (symptoms → isolation →
 
 ## Cost
 
-- Budget for this project: **~$90** of GCP credits.
-- All GPU nodes are **Spot**; GPU node pool scales to **zero**; Vertex endpoints are **undeployed**
-  right after each benchmark session.
-- Hourly prices for the cost table live in [`bench/prices.toml`](bench/prices.toml), each with its
-  source, date and a `confirmed` flag. Unconfirmed prices never produce a $/token figure.
+Budget for this project: **~$90** of GCP credits, with a Terraform-managed budget alert at 50%,
+75% and 100% of spend before credits. GPU nodes are **Spot** and the GPU pool scales to **zero**.
+Vertex endpoints are **undeployed** right after each benchmark session.
+
+List prices (us-central1) from the Cloud Billing Catalog API, saved in
+[`results/prices/2026-10-06_catalog_us-central1.json`](results/prices/2026-10-06_catalog_us-central1.json):
+
+| Resource | $/hour |
+|---|---:|
+| GKE GPU node: g2-standard-8 + 1 L4, Spot | 0.4865 |
+| Vertex AI prediction node: g2-standard-8 + 1 L4, incl. management fee | 1.1099 |
+| GKE CPU node: e2-standard-4, on-demand | 0.1340 |
+| GKE zonal control plane | 0.10, covered by the free tier |
+
+So the cluster idles at about **$0.15/h** (CPU node, its disk, the NAT IP), plus about $0.50/h
+while a GPU node is up. The same prices are pre-filled in [`bench/prices.toml`](bench/prices.toml)
+but marked unconfirmed: the $ per 1M tokens table only uses them once they are confirmed.
+
 - _TODO:_ itemised actual spend per phase.
 
 ## Teardown
@@ -198,15 +234,26 @@ Reproduced failures, each written up as a postmortem (symptoms → isolation →
 make down
 ```
 
-_TODO._ Will document exactly what `make down` removes and how to verify nothing billable remains.
+`make down` runs `terraform destroy` on everything in [`infra/terraform`](infra/terraform/): the
+cluster and both node pools, the VPC and NAT, Artifact Registry, IAM grants and the budget. Two
+things stay, both free or nearly free: the enabled APIs, and the state bucket (a few KB). To
+check that nothing billable is left:
+
+```bash
+gcloud container clusters list --project "$GCP_PROJECT_ID"
+gcloud compute instances list --project "$GCP_PROJECT_ID"
+gcloud artifacts repositories list --project "$GCP_PROJECT_ID" --location us-central1
+```
+
+Deleting the dedicated project removes everything, including the state bucket.
 
 ## Project Structure
 
 ```
 .
-├── infra/terraform/
-│   ├── modules/          # network, gke, gpu node pool, artifact registry, iam
-│   └── envs/dev/         # root module, GCS remote state
+├── infra/terraform/      # design notes in infra/terraform/README.md
+│   ├── modules/          #   network (VPC, NAT), gke (cluster, cpu + spot L4 pools), registry
+│   └── envs/dev/         #   APIs, modules, Workload Identity grants, budget; GCS remote state
 ├── k8s/                  # kustomize: bases, components, envs (design notes in k8s/README.md)
 │   ├── common/           #   namespace, service account
 │   ├── vllm/, sglang/    #   Deployment, Service, PDB (+ autoscaling/ HPA component)
@@ -231,7 +278,7 @@ _TODO._ Will document exactly what `make down` removes and how to verify nothing
 │   └── validation/       #   mock validation runs; kind/ holds the in-cluster test sweeps
 ├── docs/postmortems/     # debugging playbook
 ├── tests/                # unit tests (no cloud)
-└── scripts/              # kind cluster + e2e checks, manifest validation and rendering
+└── scripts/              # quota check, state bootstrap, image push, GKE + kind checks, manifests
 ```
 
 ## License

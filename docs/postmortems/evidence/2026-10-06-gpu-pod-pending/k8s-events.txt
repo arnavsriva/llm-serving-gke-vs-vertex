@@ -1,0 +1,6 @@
+2026-10-06T16:12:10Z   SuccessfulCreate    vllm-9fbb57799                  Created pod: vllm-9fbb57799-fbxvp
+2026-10-06T16:12:10Z   ScalingReplicaSet   vllm                            Scaled up replica set vllm-9fbb57799 from 0 to 1
+2026-10-06T16:12:10Z   FailedScheduling    vllm-9fbb57799-fbxvp            0/1 nodes are available: 1 node(s) didn't match Pod's node affinity/selector. no new claims to deallocate, preemption: 0/1 nodes are available: 1 Preemption is not helpful for scheduling.
+2026-10-06T16:12:14Z   TriggeredScaleUp    vllm-9fbb57799-fbxvp            Pod triggered scale-up: [{https://www.googleapis.com/compute/v1/projects/REDACTED/zones/us-central1-a/instanceGroups/gke-llm-serving-dev-gpu-l4-spot-0eeaac23-grp 0->1 (max: 1)}]
+2026-10-06T16:12:26Z   NotTriggerScaleUp   vllm-9fbb57799-fbxvp            Pod didn't trigger scale-up: 1 in backoff after failed scale-up
+2026-10-06T16:12:27Z   FailedScaleUp       vllm-9fbb57799-fbxvp            Node scale up in zones us-central1-a associated with this pod failed: Internal error. Pod is at risk of not being scheduled.

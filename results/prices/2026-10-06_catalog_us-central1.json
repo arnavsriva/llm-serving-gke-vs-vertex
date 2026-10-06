@@ -1,0 +1,241 @@
+{
+  "source": "Cloud Billing Catalog API (cloudbilling.googleapis.com/v1/services/*/skus), list prices, currency USD",
+  "fetched": "2026-10-06",
+  "region": "us-central1 (SKUs that serve it)",
+  "machine_specs": {
+    "g2-standard-8": "8 vCPU, 32 GiB, 1x NVIDIA L4",
+    "e2-standard-4": "4 vCPU, 16 GiB"
+  },
+  "derived_usd_per_hour": {
+    "g2-standard-8 Spot (GKE GPU node)": 0.486496,
+    "g2-standard-8 on-demand": 0.853624,
+    "Vertex AI prediction g2-standard-8 + 1x L4 (incl. management fee)": 1.109873,
+    "e2-standard-4 on-demand (GKE CPU node)": 0.134023
+  },
+  "skus": [
+    {
+      "service": "Artifact Registry",
+      "sku": "8502-299A-ABAF",
+      "description": "Artifact Registry Storage",
+      "unit": "gibibyte month",
+      "usd": 0.1,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Compute Engine",
+      "sku": "6AE1-525F-8B80",
+      "description": "Balanced PD Capacity",
+      "unit": "gibibyte month",
+      "usd": 0.1,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Compute Engine",
+      "sku": "CF4E-A0C7-E3BF",
+      "description": "E2 Instance Core running in Americas",
+      "unit": "hour",
+      "usd": 0.02181159,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Compute Engine",
+      "sku": "F449-33EC-A5EF",
+      "description": "E2 Instance Ram running in Americas",
+      "unit": "gibibyte hour",
+      "usd": 0.00292353,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Compute Engine",
+      "sku": "D18E-3563-415F",
+      "description": "G2 Instance Core running in Americas",
+      "unit": "hour",
+      "usd": 0.024988212,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Compute Engine",
+      "sku": "F0A4-E3D3-33BD",
+      "description": "G2 Instance Ram running in Americas",
+      "unit": "gibibyte hour",
+      "usd": 0.002927448,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Compute Engine",
+      "sku": null,
+      "description": "Nvidia L4 GPU attached to Spot Preemptible VMs running in Americas",
+      "unit": "hour",
+      "usd": 0.3192,
+      "usage_type": "Preemptible"
+    },
+    {
+      "service": "Compute Engine",
+      "sku": "A88A-5A60-E821",
+      "description": "Nvidia L4 GPU running in Americas",
+      "unit": "hour",
+      "usd": 0.560040239,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Compute Engine",
+      "sku": "F179-E1EA-D97A",
+      "description": "Spot Preemptible E2 Instance Core running in Americas",
+      "unit": "hour",
+      "usd": 0.01309,
+      "usage_type": "Preemptible"
+    },
+    {
+      "service": "Compute Engine",
+      "sku": "9B1F-1E62-4061",
+      "description": "Spot Preemptible E2 Instance Ram running in Americas",
+      "unit": "gibibyte hour",
+      "usd": 0.001754,
+      "usage_type": "Preemptible"
+    },
+    {
+      "service": "Compute Engine",
+      "sku": "59A6-9C49-BDDB",
+      "description": "Spot Preemptible G2 Instance Core running in Americas",
+      "unit": "hour",
+      "usd": 0.01424,
+      "usage_type": "Preemptible"
+    },
+    {
+      "service": "Compute Engine",
+      "sku": "BF80-650A-78E6",
+      "description": "Spot Preemptible G2 Instance Ram running in Americas",
+      "unit": "gibibyte hour",
+      "usd": 0.001668,
+      "usage_type": "Preemptible"
+    },
+    {
+      "service": "Compute Engine",
+      "sku": "D973-5D65-BAB2",
+      "description": "Storage PD Capacity",
+      "unit": "gibibyte month",
+      "usd": 0.04,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Kubernetes Engine",
+      "sku": "B561-BFBD-1264",
+      "description": "Regional Kubernetes Clusters",
+      "unit": "hour",
+      "usd": 0.1,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Kubernetes Engine",
+      "sku": "6B92-A835-08AB",
+      "description": "Zonal Kubernetes Clusters",
+      "unit": "hour",
+      "usd": 0.1,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Networking",
+      "sku": null,
+      "description": "Networking Cloud NAT IP Usage",
+      "unit": "hour",
+      "usd": 0.005,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Vertex AI",
+      "sku": "67B5-996F-5B0E",
+      "description": "Vertex AI: Online/Batch Prediction G2 Predefined Instance Core running in Iowa",
+      "unit": "hour",
+      "usd": 0.02874,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Vertex AI",
+      "sku": "345B-187D-70C2",
+      "description": "Vertex AI: Online/Batch Prediction G2 Predefined Instance Ram running in Iowa",
+      "unit": "gibibyte hour",
+      "usd": 0.00337,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Vertex AI",
+      "sku": "D69A-2474-2E61",
+      "description": "Vertex AI: Online/Batch Prediction Management fee on G2 Predefined Instance Core in Iowa",
+      "unit": "hour",
+      "usd": 0.0037487,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Vertex AI",
+      "sku": "93DC-E4DC-88BA",
+      "description": "Vertex AI: Online/Batch Prediction Management fee on G2 Predefined Instance RAM in Iowa",
+      "unit": "gibibyte hour",
+      "usd": 0.0004396,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Vertex AI",
+      "sku": "DE07-289A-62CB",
+      "description": "Vertex AI: Online/Batch Prediction Management fee on NVIDIA L4 in Iowa",
+      "unit": "hour",
+      "usd": 0.0840065,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Vertex AI",
+      "sku": "A549-A5A8-D627",
+      "description": "Vertex AI: Online/Batch Prediction Nvidia L4 GPU running in Iowa",
+      "unit": "hour",
+      "usd": 0.64405,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Vertex AI",
+      "sku": "B03F-5103-EE74",
+      "description": "Vertex AI: Training/Pipelines Management fee on G2 Instance Core in Iowa",
+      "unit": "hour",
+      "usd": 0.003748231,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Vertex AI",
+      "sku": "2BF0-DBAA-E0D2",
+      "description": "Vertex AI: Training/Pipelines Management fee on G2 Instance RAM in Iowa",
+      "unit": "gibibyte hour",
+      "usd": 0.0004391,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Vertex AI",
+      "sku": "64E9-CBF1-8858",
+      "description": "Vertex AI: Training/Pipelines Management fee on NVIDIA L4 in Iowa",
+      "unit": "hour",
+      "usd": 0.084006035,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Vertex AI",
+      "sku": "976E-BCA3-15EF",
+      "description": "Vertex AI: Training/Pipelines on G2 Instance Core running in Americas",
+      "unit": "hour",
+      "usd": 0.028736444,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Vertex AI",
+      "sku": "74D0-9075-AB7B",
+      "description": "Vertex AI: Training/Pipelines on G2 Instance Ram running in Americas",
+      "unit": "gibibyte hour",
+      "usd": 0.003366566,
+      "usage_type": "OnDemand"
+    },
+    {
+      "service": "Vertex AI",
+      "sku": "37AD-572D-B2EC",
+      "description": "Vertex AI: Training/Pipelines on Nvidia L4 GPU running in Americas",
+      "unit": "hour",
+      "usd": 0.644046276,
+      "usage_type": "OnDemand"
+    }
+  ]
+}

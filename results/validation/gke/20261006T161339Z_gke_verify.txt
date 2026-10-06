@@ -1,0 +1,28 @@
+# make gke-verify on llm-serving-dev (GKE 1.35.8-gke.1225000), 2026-10-06T16:13:40Z
+bench image tag: 2a64d1eeab3a-dirty
+
+== Node pools
+  PASS  one CPU node, Ready
+  PASS  no GPU node while nothing requests a GPU
+        gpu-l4-spot: g2-standard-8 True nvidia-l4 1 LATEST 0 1
+  PASS  GPU pool is Spot g2-standard-8 + 1 L4, GKE-installed driver, autoscaling 0..1
+
+== Control plane access
+  PASS  DNS endpoint (IAM-authorized) answers kubectl
+  PASS  public IP endpoint refuses this machine (no authorized networks)
+
+== Shared resources (namespace, service accounts, PodMonitoring, bench client)
+  PASS  bench client rolled out (image pulled from Artifact Registry)
+  PASS  bench client runs on the CPU pool
+
+== Workload Identity
+  PASS  bench-client service account may call Vertex AI (HTTP 200)
+  PASS  inference service account may not (HTTP 403, expected 403)
+
+== Artifact Registry Docker Hub proxy
+  PASS  busybox pulled through the remote repository
+
+== Egress through Cloud NAT (nodes have no external IPs)
+  PASS  Hugging Face reachable from a pod (Qwen3-8B-AWQ weights: 6.1 GB)
+
+gke verify: all checks passed

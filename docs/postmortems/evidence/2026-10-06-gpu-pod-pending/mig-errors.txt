@@ -1,0 +1,6 @@
+2026-10-06T09:12:23.217-07:00
+  UNSUPPORTED_OPERATION
+  Instance 'gke-llm-serving-dev-gpu-l4-spot-0eeaac23-6s88' creation failed: Your billing account is currently in the free tier where non-TPU accelerators are not available. Please upgrade to a paid billing account as described here: https://cloud.google.com/free/docs/gcp-free-tier#how-to-upgrade
+2026-10-06T09:12:15.381-07:00
+  UNSUPPORTED_OPERATION
+  Instance 'gke-llm-serving-dev-gpu-l4-spot-0eeaac23-6s88' creation failed: Your billing account is currently in the free tier where non-TPU accelerators are not available. Please upgrade to a paid billing account as described here: https://cloud.google.com/free/docs/gcp-free-tier#how-to-upgrade

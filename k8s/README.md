@@ -76,7 +76,7 @@ drains working and, with two replicas, keeps one serving.
 
 **Identity.** Pods run as the `inference` (servers) and `bench-client` Kubernetes service
 accounts, with `automountServiceAccountToken: false`. On GKE, Workload Identity Federation grants
-IAM roles directly to those principals (Terraform, next phase): no service account keys, no
+IAM roles directly to those principals (infra/terraform): no service account keys, no
 annotations, and only the bench client gets Vertex AI access.
 
 **Images.** Tags are pinned: `vllm/vllm-openai:v0.31.0-cu129`, because the default `v0.31.0`
@@ -97,7 +97,8 @@ upper bound, not a guarantee.
   generator records these as errors per request instead of dropping them, and a benchmark level
   with preemption errors is re-run rather than reported.
 - **Cold start dominates recovery.** A replacement needs a new Spot node (if any capacity is
-  left in the zone), the image, and a multi-GB weight download before it is Ready again. Image
+  left in the zone), the image, and a 6.1 GB weight download (Qwen3-8B-AWQ, measured from a pod
+  in `results/validation/gke/`) before it is Ready again. Image
   streaming helps with the image. Caching weights in GCS (GCS FUSE CSI) or on a disk image would
   remove the download.
 - **For production traffic** on Spot: at least two replicas across zones, an on-demand fallback

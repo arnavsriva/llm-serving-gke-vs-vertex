@@ -1,0 +1,2 @@
+NAME                   READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES
+vllm-9fbb57799-fbxvp   0/1     Pending   0          75s   <none>   <none>   <none>           <none>

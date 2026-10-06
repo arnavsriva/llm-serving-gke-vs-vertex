@@ -7,7 +7,9 @@
 #     zero prices are never turned into a $/1M-token figure; the cost column stays empty.
 #   * Spot prices vary over time: re-confirm before each benchmark session.
 #   * Add more [[targets.<name>.items]] entries for overheads you want included (e.g. the GKE
-#     system node pool or cluster management fee), so the table states exactly what it counts.
+#     CPU node, $0.134032/h for e2-standard-4, or the $0.10/h control plane if the free tier no
+#     longer covers it), so the table states exactly what it counts. As filled in, GKE rows count
+#     the GPU node only and the Vertex row counts the endpoint node.
 
 currency = "USD"
 region = "us-central1"
@@ -16,28 +18,28 @@ region = "us-central1"
 description = "vLLM on one g2-standard-8 (1x NVIDIA L4) Spot node in GKE Standard"
 
 [[targets.vllm-gke.items]]
-name = "g2-standard-8 Spot VM (8 vCPU, 32 GB, 1x L4)"
-usd_per_hour = 0.0
-source = ""
-as_of = ""
+name = "g2-standard-8 Spot VM (8 vCPU, 32 GB, 1x L4): 8 Spot G2 cores + 32 GiB Spot G2 RAM + Spot L4"
+usd_per_hour = 0.486496
+source = "Cloud Billing Catalog API list prices, results/prices/2026-10-06_catalog_us-central1.json"
+as_of = "2026-10-06"
 confirmed = false
 
 [targets.sglang-gke]
 description = "SGLang on one g2-standard-8 (1x NVIDIA L4) Spot node in GKE Standard"
 
 [[targets.sglang-gke.items]]
-name = "g2-standard-8 Spot VM (8 vCPU, 32 GB, 1x L4)"
-usd_per_hour = 0.0
-source = ""
-as_of = ""
+name = "g2-standard-8 Spot VM (8 vCPU, 32 GB, 1x L4): 8 Spot G2 cores + 32 GiB Spot G2 RAM + Spot L4"
+usd_per_hour = 0.486496
+source = "Cloud Billing Catalog API list prices, results/prices/2026-10-06_catalog_us-central1.json"
+as_of = "2026-10-06"
 confirmed = false
 
 [targets.vllm-vertex]
 description = "vLLM custom container on a Vertex AI endpoint, one g2-standard-8 (1x NVIDIA L4)"
 
 [[targets.vllm-vertex.items]]
-name = "Vertex AI prediction node g2-standard-8 (1x L4)"
-usd_per_hour = 0.0
-source = ""
-as_of = ""
+name = "Vertex AI prediction node g2-standard-8 (1x L4), including Vertex's management fee"
+usd_per_hour = 1.109888
+source = "Cloud Billing Catalog API list prices, results/prices/2026-10-06_catalog_us-central1.json"
+as_of = "2026-10-06"
 confirmed = false

@@ -1,0 +1,12 @@
+Compute Engine, us-central1:
+  ok       PREEMPTIBLE_NVIDIA_L4_GPUS                               limit     1  need  1  Spot L4 node for GKE serving (Phase 4)
+  ok       NVIDIA_L4_GPUS                                           limit     1  need  0  on-demand L4 (not used: GPU nodes are Spot)
+  ok       CPUS                                                     limit   200  need 12  CPU node (4) + GPU node (8) vCPUs
+Compute Engine, global:
+  BLOCKER  GPUS_ALL_REGIONS                                         limit     0  need  1  any GPU VM at all, GKE nodes included
+  ok       CPUS_ALL_REGIONS                                         limit    12  need 12  CPU node (4) + GPU node (8) vCPUs
+Vertex AI, us-central1:
+  ok       CustomModelServingL4GPUsPerProjectPerRegion              limit     2  need  1  Vertex AI endpoint on L4 (Phase 5)
+  ok       CustomModelServingPreemptibleL4GPUsPerProjectPerRegion   limit     1  need  0  Spot Vertex endpoint (optional)
+
+1 blocker(s)

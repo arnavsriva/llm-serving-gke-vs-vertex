@@ -7,6 +7,14 @@ export
 
 TF_DIR := infra/terraform/envs/dev
 PYTHON := .venv/bin/python
+TF     := terraform -chdir=$(TF_DIR)
+
+# Terraform inputs come from .env (single source of truth); terraform.tfvars can still override.
+export TF_VAR_project_id         ?= $(GCP_PROJECT_ID)
+export TF_VAR_region             ?= $(GCP_REGION)
+export TF_VAR_zone               ?= $(GCP_ZONE)
+export TF_VAR_cluster_name       ?= $(GKE_CLUSTER_NAME)
+export TF_VAR_billing_account_id ?= $(BILLING_ACCOUNT_ID)
 
 # Benchmark settings. .env or the command line override them, e.g.
 #   make bench BENCH_TARGET=sglang-gke BENCH_BASE_URL=http://localhost:8001 CONCURRENCY=1,4,16
@@ -22,10 +30,11 @@ BENCH_ARGS     ?=
 RUNS           ?=
 
 .PHONY: help setup lint test lock mock bench-smoke bench report validate-manifests kind-up kind-e2e \
-	kind-down tf-plan up deploy-vllm deploy-sglang deploy-vertex finetune down
+	kind-down quota tf-bootstrap tf-init tf-plan up push-bench-image gke-verify deploy-vllm \
+	deploy-sglang deploy-vertex finetune down
 
 help: ## Show targets
-	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-20s %s\n", $$1, $$2}'
+	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(firstword $(MAKEFILE_LIST)) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-20s %s\n", $$1, $$2}'
 
 setup: ## Create Python 3.11 venv, install dev deps, install pre-commit hooks
 	uv venv --python 3.11 .venv
@@ -65,12 +74,30 @@ kind-e2e: ## On kind with mock servers: scheduling, readiness, PDB, in-cluster l
 kind-down: ## Delete the local kind cluster
 	scripts/kind.sh down
 
-tf-plan: ## Terraform plan for dev (no changes applied)
-	terraform -chdir=$(TF_DIR) init -backend-config="bucket=$(TF_STATE_BUCKET)"
-	terraform -chdir=$(TF_DIR) plan -out=tfplan
+quota: ## Show the GPU/CPU quotas this project needs (read-only)
+	scripts/check_quota.sh
 
-up: ## 💲 Apply Terraform (cluster, GPU pool at 0 nodes, Artifact Registry, IAM)
-	@echo "TODO: implemented in infra phase"; exit 1
+tf-bootstrap: ## 💲 (negligible) Create the versioned GCS bucket for Terraform state, once
+	scripts/bootstrap_tf_state.sh
+
+tf-init: ## Initialise Terraform with the GCS state backend
+	$(TF) init -input=false -backend-config="bucket=$(TF_STATE_BUCKET)"
+
+tf-plan: tf-init ## Terraform plan for dev, saved to tfplan (no changes applied)
+	$(TF) plan -input=false -out=tfplan
+
+up: ## 💲 Apply the plan saved by `make tf-plan`, then fetch cluster credentials
+	$(TF) apply -input=false tfplan
+	$$($(TF) output -raw get_credentials)
+
+push-bench-image: ## 💲 (negligible) Build the bench image for amd64 and push it to Artifact Registry
+	scripts/push_bench_image.sh
+
+gke-verify: ## Post-apply checks on GKE without a GPU: pools, endpoint lockdown, Workload Identity, AR, NAT
+	@tag="$${BENCH_IMAGE_TAG:-}"; \
+	if [ -z "$$tag" ]; then image=$$(scripts/push_bench_image.sh) || exit 1; tag="$${image##*:}"; fi; \
+	echo "bench image tag: $$tag"; \
+	BENCH_IMAGE_TAG="$$tag" scripts/gke_verify.sh
 
 deploy-vllm: ## 💲 Deploy vLLM to GKE (scales GPU pool up)
 	@echo "TODO: implemented in GKE serving phase"; exit 1
@@ -95,5 +122,5 @@ report: ## Plots + cost table for RUNS="results/<run-a> results/<run-b>" -> resu
 finetune: ## 💲 LoRA fine-tune on a spot L4
 	@echo "TODO: implemented in fine-tuning phase"; exit 1
 
-down: ## Tear down: undeploy Vertex endpoints, delete workloads, terraform destroy
-	@echo "TODO: implemented in infra phase"; exit 1
+down: ## Destroy everything Terraform created (asks for confirmation; AUTO_APPROVE=1 skips it)
+	$(TF) destroy $(if $(AUTO_APPROVE),-auto-approve)
