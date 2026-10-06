@@ -1,0 +1,43 @@
+# Hourly prices behind the "$ per 1M output tokens" column (python -m bench cost).
+#
+# Rules:
+#   * Take each usd_per_hour from the official GCP pricing pages or the Cloud Billing SKU catalog
+#     for us-central1, and record where it came from (source) and when (as_of, YYYY-MM-DD).
+#   * Set confirmed = true only after the project owner has confirmed the value. Unconfirmed or
+#     zero prices are never turned into a $/1M-token figure; the cost column stays empty.
+#   * Spot prices vary over time: re-confirm before each benchmark session.
+#   * Add more [[targets.<name>.items]] entries for overheads you want included (e.g. the GKE
+#     system node pool or cluster management fee), so the table states exactly what it counts.
+
+currency = "USD"
+region = "us-central1"
+
+[targets.vllm-gke]
+description = "vLLM on one g2-standard-8 (1x NVIDIA L4) Spot node in GKE Standard"
+
+[[targets.vllm-gke.items]]
+name = "g2-standard-8 Spot VM (8 vCPU, 32 GB, 1x L4)"
+usd_per_hour = 0.0
+source = ""
+as_of = ""
+confirmed = false
+
+[targets.tgi-gke]
+description = "TGI on one g2-standard-8 (1x NVIDIA L4) Spot node in GKE Standard"
+
+[[targets.tgi-gke.items]]
+name = "g2-standard-8 Spot VM (8 vCPU, 32 GB, 1x L4)"
+usd_per_hour = 0.0
+source = ""
+as_of = ""
+confirmed = false
+
+[targets.vllm-vertex]
+description = "vLLM custom container on a Vertex AI endpoint, one g2-standard-8 (1x NVIDIA L4)"
+
+[[targets.vllm-vertex.items]]
+name = "Vertex AI prediction node g2-standard-8 (1x L4)"
+usd_per_hour = 0.0
+source = ""
+as_of = ""
+confirmed = false

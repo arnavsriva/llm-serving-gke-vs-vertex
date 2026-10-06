@@ -1,0 +1,25 @@
+concurrency,metric,expected,measured,rel_error,tolerance,passed
+,http_rtt_ms,,0.162666,,info,true
+1,tpot_ms_p50,10.5,10.5027,0.000257143,0.1,true
+1,ttft_ms_p50,10.6627,11.5625,0.084391,0.15,true
+1,output_tok_s,95.2381,94.7418,-0.0052111,0.1,true
+1,littles_law_ratio,1,0.999597,-0.000403,"[0.95, 1.05]",true
+2,tpot_ms_p50,11,10.9782,-0.00198182,0.1,true
+2,ttft_ms_p50,22,21.2987,-0.0318773,0.15,true
+2,output_tok_s,174.416,174.999,0.00334307,0.1,true
+2,littles_law_ratio,1,0.999303,-0.000697,"[0.95, 1.05]",true
+4,tpot_ms_p50,12,11.933,-0.00558333,0.1,true
+4,ttft_ms_p50,24,23.4637,-0.0223458,0.15,true
+4,output_tok_s,320.132,320.756,0.00194915,0.1,true
+4,littles_law_ratio,1,0.995052,-0.004948,"[0.95, 1.05]",true
+8,tpot_ms_p50,14,13.838,-0.0115714,0.1,true
+8,ttft_ms_p50,28,27.2275,-0.0275893,0.15,true
+8,output_tok_s,546.785,550.77,0.00728851,0.1,true
+8,littles_law_ratio,1,0.994501,-0.005499,"[0.95, 1.05]",true
+16,tpot_ms_p50,18,17.6379,-0.0201167,0.1,true
+16,ttft_ms_p50,36,35.4002,-0.0166611,0.15,true
+16,output_tok_s,850.502,865.475,0.0176046,0.1,true
+16,littles_law_ratio,1,0.997646,-0.002354,"[0.95, 1.05]",true
+32,tpot_ms_p50,18,17.9737,-0.00146111,0.1,true
+32,output_tok_s,888.889,887.059,-0.00205863,0.1,true
+32,littles_law_ratio,1,0.992563,-0.007437,"[0.95, 1.05]",true

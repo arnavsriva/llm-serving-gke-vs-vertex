@@ -1,0 +1,85 @@
+{
+  "run_id": "20261006T124631Z_mock",
+  "target": "mock",
+  "model": "mock-model",
+  "api": "completions",
+  "url": "http://127.0.0.1:63607/v1/completions",
+  "started_at_utc": "2026-10-06T12:46:31+00:00",
+  "finished_at_utc": "2026-10-06T12:46:59+00:00",
+  "git": {
+    "commit": "23371344f05b617ecc717b78c439dcba433c07ee",
+    "dirty": true
+  },
+  "workload": {
+    "version": 1,
+    "seed": 0,
+    "prompt_len_words": "uniform:50,150",
+    "output_len_tokens": "uniform:16,32",
+    "fingerprint": "11e96fa5ea6fe7f6"
+  },
+  "concurrency": [
+    1,
+    2,
+    4,
+    8,
+    16,
+    32
+  ],
+  "requests_per_level": 32,
+  "warmup_requests": null,
+  "sampling": {
+    "temperature": 0.0,
+    "stream_usage": true
+  },
+  "extra_body": {},
+  "header_names": [],
+  "slo": {
+    "ttft_ms": 50.0,
+    "tpot_ms": 15.0
+  },
+  "client": {
+    "python": "3.11.15",
+    "aiohttp": "3.14.4",
+    "platform": "macOS-27.0-arm64-arm-64bit",
+    "cpu_count": 18
+  },
+  "notes": "Load-generator validation against the CPU mock server (python -m bench smoke).",
+  "levels": [
+    {
+      "concurrency": 1,
+      "warmup": 1,
+      "measured": 32,
+      "cooldown": 0
+    },
+    {
+      "concurrency": 2,
+      "warmup": 2,
+      "measured": 32,
+      "cooldown": 1
+    },
+    {
+      "concurrency": 4,
+      "warmup": 4,
+      "measured": 32,
+      "cooldown": 3
+    },
+    {
+      "concurrency": 8,
+      "warmup": 8,
+      "measured": 32,
+      "cooldown": 8
+    },
+    {
+      "concurrency": 16,
+      "warmup": 16,
+      "measured": 64,
+      "cooldown": 21
+    },
+    {
+      "concurrency": 32,
+      "warmup": 32,
+      "measured": 128,
+      "cooldown": 31
+    }
+  ]
+}
