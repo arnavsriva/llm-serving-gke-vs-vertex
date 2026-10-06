@@ -22,10 +22,10 @@ source = ""
 as_of = ""
 confirmed = false
 
-[targets.tgi-gke]
-description = "TGI on one g2-standard-8 (1x NVIDIA L4) Spot node in GKE Standard"
+[targets.sglang-gke]
+description = "SGLang on one g2-standard-8 (1x NVIDIA L4) Spot node in GKE Standard"
 
-[[targets.tgi-gke.items]]
+[[targets.sglang-gke.items]]
 name = "g2-standard-8 Spot VM (8 vCPU, 32 GB, 1x L4)"
 usd_per_hour = 0.0
 source = ""

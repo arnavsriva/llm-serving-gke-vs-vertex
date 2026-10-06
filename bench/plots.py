@@ -25,7 +25,7 @@ from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from matplotlib.ticker import FixedLocator, FuncFormatter, LogLocator, NullFormatter, NullLocator
 
-from bench.report import Run, load_run
+from bench.report import Run, load_run, workload_mismatch
 
 THEMES = {
     "light": {
@@ -65,7 +65,7 @@ THEMES = {
         ),
     },
 }
-KNOWN_TARGETS = ("vllm-gke", "tgi-gke", "vllm-vertex")
+KNOWN_TARGETS = ("vllm-gke", "sglang-gke", "vllm-vertex")
 MARKERS = ("o", "s", "^", "D", "v", "P", "X", "h")
 FONTS = ("Inter", "Helvetica Neue", "Helvetica", "Arial", "Liberation Sans", "DejaVu Sans")
 
@@ -120,12 +120,6 @@ def assign_slots(targets: Sequence[str]) -> dict[str, int]:
                 raise ValueError("more than 8 targets in one chart; split them across charts")
             slots[t] = free.pop(0)
     return slots
-
-
-def workload_mismatch(runs: Sequence[Run]) -> bool:
-    """True if the runs did not all use the same workload (so they are not comparable)."""
-    fingerprints = {run.meta.get("workload", {}).get("fingerprint") for run in runs}
-    return len(fingerprints) > 1
 
 
 def plot_runs(

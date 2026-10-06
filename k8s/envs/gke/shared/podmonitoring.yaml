@@ -1,0 +1,16 @@
+# Managed Service for Prometheus scrapes both servers' /metrics (queue depth, KV-cache usage,
+# token counters): the HPA signal, and server-side context for every benchmark run.
+apiVersion: monitoring.googleapis.com/v1
+kind: PodMonitoring
+metadata:
+  name: inference-servers
+  labels:
+    app.kubernetes.io/part-of: llm-serving
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: inference-server
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s

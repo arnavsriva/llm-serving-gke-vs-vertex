@@ -1,0 +1,19 @@
+# Build context is the repo root; only bench/ is copied into images.
+.git
+.github
+.venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.ruff_cache
+.env
+.env.*
+results
+docs
+infra
+k8s
+tests
+finetune
+vertex
+scripts
+*.md

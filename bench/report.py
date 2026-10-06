@@ -94,6 +94,12 @@ def analyze_run(run_dir: Path) -> list[dict[str, Any]]:
     return rows
 
 
+def workload_mismatch(runs: Sequence[Run]) -> bool:
+    """True if the runs did not all use the same workload (so they are not comparable)."""
+    fingerprints = {run.meta.get("workload", {}).get("fingerprint") for run in runs}
+    return len(fingerprints) > 1
+
+
 def load_run(run_dir: Path) -> Run:
     run_dir = Path(run_dir)
     return Run(run_dir, read_json(run_dir / META_FILE), read_csv(run_dir / SUMMARY_FILE))

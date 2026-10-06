@@ -1,0 +1,8 @@
+# Production shape: the benchmark deployment plus a queue-depth HPA (needs the Custom Metrics
+# Stackdriver Adapter in the cluster).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../sglang
+components:
+  - ../../../sglang/autoscaling

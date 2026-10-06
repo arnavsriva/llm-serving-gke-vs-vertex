@@ -1,0 +1,5 @@
+# Optional HPA, kept out of benchmark deployments. Used by k8s/envs/gke/sglang-autoscale.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+  - hpa.yaml

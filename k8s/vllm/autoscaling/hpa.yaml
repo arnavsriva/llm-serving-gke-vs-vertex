@@ -1,0 +1,41 @@
+# Scale on queue depth: requests waiting for a batch slot. GPU utilization saturates long before
+# latency degrades, and CPU says nothing about GPU load. On GKE the metric is scraped by Managed
+# Service for Prometheus (PodMonitoring) and served to the HPA by the Custom Metrics Stackdriver
+# Adapter. The target is a starting point; tune it to the concurrency where TTFT starts to climb.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: vllm
+  labels:
+    app.kubernetes.io/name: vllm
+    app.kubernetes.io/part-of: llm-serving
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: vllm
+  minReplicas: 1
+  maxReplicas: 2
+  metrics:
+    - type: Pods
+      pods:
+        metric:
+          name: prometheus.googleapis.com|vllm:num_requests_waiting|gauge
+        target:
+          type: AverageValue
+          averageValue: "4"
+  # A new replica needs a GPU node, an image pull and a model load (minutes), so react to a
+  # sustained queue and scale down slowly.
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 300
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 300

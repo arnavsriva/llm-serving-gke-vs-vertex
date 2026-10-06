@@ -1,0 +1,13 @@
+# Namespace, service accounts, metrics scraping and the in-cluster load generator.
+# ${...} placeholders are filled from the environment by scripts/render_manifests.py.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: llm-serving
+resources:
+  - ../../../common
+  - ../../../bench-client
+  - podmonitoring.yaml
+images:
+  - name: llm-bench
+    newName: ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${AR_REPO}/llm-bench
+    newTag: ${BENCH_IMAGE_TAG}

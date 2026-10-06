@@ -239,6 +239,8 @@ def _utc_now() -> str:
 
 
 def _git_info() -> dict[str, Any]:
+    """Commit of the code that produced the run: from git when run from a checkout, else from
+    BENCH_GIT_COMMIT, which the container image bakes in at build time."""
     root = Path(__file__).resolve().parent.parent
 
     def git(*args: str) -> str:
@@ -250,8 +252,9 @@ def _git_info() -> dict[str, Any]:
         commit = git("log", "-1", "--format=%H")
         dirty = bool(git("status", "--porcelain", "--untracked-files=no"))
     except (OSError, subprocess.SubprocessError):
-        return {"commit": None, "dirty": None}
-    return {"commit": commit or None, "dirty": dirty}
+        image_commit = os.environ.get("BENCH_GIT_COMMIT") or None
+        return {"commit": image_commit, "dirty": None, "source": "image" if image_commit else None}
+    return {"commit": commit or None, "dirty": dirty, "source": "checkout"}
 
 
 def _build_meta(

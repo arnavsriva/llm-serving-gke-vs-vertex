@@ -1,0 +1,59 @@
+# Long-running pod for the load generator: sweeps are started with `kubectl exec` and results
+# copied out with `kubectl cp`. It has no GPU toleration, so it can only run on the CPU pool,
+# never on the node whose server it is measuring. The same client location is used for all
+# targets, Vertex AI included.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bench-client
+  labels:
+    app.kubernetes.io/name: bench-client
+    app.kubernetes.io/component: load-generator
+    app.kubernetes.io/part-of: llm-serving
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bench-client
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bench-client
+        app.kubernetes.io/component: load-generator
+        app.kubernetes.io/part-of: llm-serving
+    spec:
+      serviceAccountName: bench-client
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 5  # `sleep` as PID 1 ignores SIGTERM
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: bench
+          image: llm-bench:dev
+          command: ["sleep", "infinity"]
+          resources:
+            requests:
+              cpu: "1"
+              memory: 1Gi
+            limits:
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: results
+              mountPath: /results
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: results
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sglang
+  labels:
+    app.kubernetes.io/name: sglang
+    app.kubernetes.io/part-of: llm-serving
+spec:
+  selector:
+    app.kubernetes.io/name: sglang
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http

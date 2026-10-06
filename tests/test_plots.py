@@ -38,7 +38,7 @@ def fake_run(root, target, scale, fingerprint="abc"):
 
 
 def test_plots_are_written_for_each_chart_and_theme(tmp_path):
-    runs = [fake_run(tmp_path, "vllm-gke", 1.0), fake_run(tmp_path, "tgi-gke", 1.3)]
+    runs = [fake_run(tmp_path, "vllm-gke", 1.0), fake_run(tmp_path, "sglang-gke", 1.3)]
     paths = plot_runs(runs, tmp_path / "out")
     assert len(paths) == 6
     assert all(p.exists() and p.stat().st_size > 10_000 for p in paths)
@@ -64,6 +64,6 @@ def test_tick_labels_are_exact(value, label):
 
 
 def test_targets_keep_their_colour_slot():
-    assert assign_slots(["tgi-gke", "vllm-vertex"]) == {"tgi-gke": 1, "vllm-vertex": 2}
+    assert assign_slots(["sglang-gke", "vllm-vertex"]) == {"sglang-gke": 1, "vllm-vertex": 2}
     assert assign_slots(["mock"]) == {"mock": 0}
     assert assign_slots(["vllm-gke", "mock"]) == {"vllm-gke": 0, "mock": 1}

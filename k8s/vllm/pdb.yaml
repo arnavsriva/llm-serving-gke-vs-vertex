@@ -1,0 +1,15 @@
+# Limits voluntary disruptions (drains, upgrades, autoscaler scale-down) to one pod at a time.
+# Not minAvailable: 1, which would block every node drain while there is a single replica.
+# Spot preemption is involuntary: no PDB can prevent it (see k8s/README.md).
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vllm
+  labels:
+    app.kubernetes.io/name: vllm
+    app.kubernetes.io/part-of: llm-serving
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vllm

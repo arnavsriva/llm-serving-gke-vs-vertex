@@ -1,0 +1,11 @@
+# Benchmark shape: exactly one replica and no HPA, since scaling during a sweep would invalidate
+# it. The image is pulled through the Artifact Registry remote repository for Docker Hub (image
+# streaming, no Docker Hub rate limits). ${...}: see scripts/render_manifests.py.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: llm-serving
+resources:
+  - ../../../vllm
+images:
+  - name: vllm/vllm-openai
+    newName: ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${AR_DOCKERHUB_REPO}/vllm/vllm-openai

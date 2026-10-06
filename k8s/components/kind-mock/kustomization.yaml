@@ -1,0 +1,46 @@
+# On kind there is no GPU and no model, so the CPU mock server (same image as the load generator)
+# runs in place of vLLM / SGLang. Everything else is left exactly as on GKE: port, probes,
+# nodeSelector, toleration and the nvidia.com/gpu request, which the kind "GPU" node satisfies
+# with a fake extended resource (scripts/kind.sh).
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+  - target:
+      kind: Deployment
+      labelSelector: app.kubernetes.io/component=inference-server
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: llm-bench:dev
+      - op: replace
+        path: /spec/template/spec/containers/0/command
+        value: ["python", "-m", "bench"]
+      - op: replace
+        path: /spec/template/spec/containers/0/args
+        value:
+          - mock
+          - --host=0.0.0.0
+          - --port=8000
+          - --model=Qwen/Qwen3-8B-AWQ
+          - --load-delay-s=15  # /health answers 503 until then, like a server loading weights
+          - --decode-base-ms=20
+          - --decode-per-seq-ms=1
+          - --max-num-seqs=8
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+            nvidia.com/gpu: "1"
+          limits:
+            memory: 512Mi
+            nvidia.com/gpu: "1"
+      - op: add
+        path: /spec/template/spec/securityContext
+        value:
+          runAsNonRoot: true
+          runAsUser: 10001
+          runAsGroup: 10001
+          seccompProfile:
+            type: RuntimeDefault

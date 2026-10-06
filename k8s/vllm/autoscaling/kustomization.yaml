@@ -1,0 +1,6 @@
+# Optional: the HPA is kept out of benchmark deployments, where scaling mid-sweep would
+# invalidate the measurements. Used by k8s/envs/gke/vllm-autoscale.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+  - hpa.yaml

@@ -1,0 +1,8 @@
+# Namespace, service accounts and the in-cluster load generator. Applied once; the servers are
+# deployed and removed separately (envs/kind/vllm, envs/kind/sglang).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: llm-serving
+resources:
+  - ../../../common
+  - ../../../bench-client

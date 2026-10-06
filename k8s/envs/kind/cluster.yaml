@@ -1,0 +1,23 @@
+# kind cluster shaped like the GKE one: a CPU worker for everything else, and a "GPU" worker with
+# the labels and taint GKE puts on a Spot L4 node. scripts/kind.sh also advertises a fake
+# nvidia.com/gpu on it, so pods that request a GPU can only run there, one at a time.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+  - role: worker
+    labels:
+      cloud.google.com/gke-nodepool: default-pool
+  - role: worker
+    labels:
+      cloud.google.com/gke-nodepool: gpu-l4-spot
+      cloud.google.com/gke-accelerator: nvidia-l4
+      cloud.google.com/gke-spot: "true"
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          taints:
+            - key: nvidia.com/gpu
+              value: present
+              effect: NoSchedule

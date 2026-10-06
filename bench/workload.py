@@ -2,7 +2,7 @@
 
 Request ``i`` is a pure function of ``(seed, i)``: every target receives byte-identical prompts,
 and the measured requests of each concurrency level do not depend on timing. Every prompt starts
-with a unique random tag, so no two requests share a cacheable prefix (vLLM and TGI both enable
+with a unique random tag, so no two requests share a cacheable prefix (vLLM and SGLang both enable
 prefix caching by default, which would otherwise flatter TTFT).
 """
 

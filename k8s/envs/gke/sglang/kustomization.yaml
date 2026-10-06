@@ -1,0 +1,9 @@
+# Benchmark shape: exactly one replica and no HPA (see envs/gke/vllm).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: llm-serving
+resources:
+  - ../../../sglang
+images:
+  - name: lmsysorg/sglang
+    newName: ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${AR_DOCKERHUB_REPO}/lmsysorg/sglang

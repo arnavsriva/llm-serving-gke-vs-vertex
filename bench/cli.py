@@ -273,8 +273,7 @@ def _cmd_plot(args: argparse.Namespace) -> int:
 
 def _cmd_cost(args: argparse.Namespace) -> int:
     from bench.cost import best_rows, cost_rows, load_prices, write_cost_report
-    from bench.plots import workload_mismatch
-    from bench.report import load_run
+    from bench.report import load_run, workload_mismatch
 
     runs = [load_run(d) for d in args.run_dirs]
     if workload_mismatch(runs):

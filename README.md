@@ -1,11 +1,12 @@
 # LLM Serving on GKE vs. Vertex AI
 
-> Serving **Qwen3-8B (AWQ)** on a single NVIDIA L4 three ways — vLLM on GKE, TGI on GKE, and vLLM on
-> a Vertex AI endpoint — and comparing latency, throughput, and cost under identical load. Plus LoRA
-> fine-tuning and a debugging playbook of real, reproduced failures.
+> Serving **Qwen3-8B (AWQ)** on a single NVIDIA L4 three ways — vLLM on GKE, SGLang on GKE, and vLLM
+> on a Vertex AI endpoint — and comparing latency, throughput, and cost under identical load. Plus
+> LoRA fine-tuning and a debugging playbook of real, reproduced failures.
 
-**Status:** 🚧 Load generator built and validated against a CPU mock server. No GPU benchmarks
-have been run yet. Every number in this README comes from a saved run in [`results/`](results/).
+**Status:** 🚧 Load generator validated against a CPU mock server; Kubernetes manifests validated
+on a local kind cluster. No GPU benchmarks have been run yet. Every number in this README comes
+from a saved run in [`results/`](results/).
 
 ---
 
@@ -15,6 +16,10 @@ The question a client actually asks: *"Should we self-host our open model on GKE
 Vertex AI endpoint?"* This repo answers it with measurements rather than opinions:
 
 - Same model, same quantization, same GPU type (L4), same region (`us-central1`).
+- Two self-hosted engines, **vLLM** and **SGLang**, against one managed option, **vLLM on Vertex
+  AI**. (The original plan used TGI as the second engine. Its repository was archived and put in
+  maintenance mode, with Hugging Face pointing users to vLLM and SGLang, so SGLang replaced it;
+  status checked 2026-10-06.)
 - Same load generator, same prompt-length distribution, same concurrency sweep.
 - Metrics: **TTFT**, **inter-token latency (ITL)**, **output throughput vs concurrency**, and
   **$ per 1M output tokens**.
@@ -25,10 +30,10 @@ _TODO (Phase: infra)._ Diagram of:
 
 - GKE Standard cluster with a default CPU pool and a separate **spot L4 GPU node pool** (autoscaling,
   min 0), tainted so only inference pods land there.
-- vLLM and TGI Deployments behind ClusterIP Services; HPA; PodDisruptionBudgets.
+- vLLM and SGLang Deployments behind ClusterIP Services; queue-depth HPA; PodDisruptionBudgets.
 - Artifact Registry for images; Workload Identity for pod → GCP access.
 - Vertex AI Model Registry → Endpoint running the custom vLLM container.
-- Load generator running from a single client location against all three targets.
+- Load generator in a pod on the CPU pool: one client location for all three targets.
 
 ## Quickstart
 
@@ -38,10 +43,13 @@ Locally, no cloud needed:
 
 ```bash
 make setup         # Python 3.11 venv + pre-commit hooks
-make lint test     # ruff, yamllint, terraform fmt; unit + end-to-end tests
+make lint test     # ruff, yamllint, terraform fmt, kubeconform; unit + end-to-end tests
 make bench-smoke   # validate the load generator against the CPU mock -> results/validation/
 make mock          # terminal 1: mock OpenAI-compatible server on :8000
 make bench         # terminal 2: concurrency sweep against it -> results/<timestamp>_mock/
+make kind-up       # local kind cluster shaped like GKE (CPU node + tainted fake-GPU node)
+make kind-e2e      # deploy the manifests with mock servers and check scheduling, probes, PDB, load
+make kind-down     # delete the kind cluster
 ```
 
 Against GCP (later phases):
@@ -53,17 +61,26 @@ make tf-plan                                                    # plan only
 make up                                                         # 💲 create infra
 make deploy-vllm                                                # 💲 GPU node scales up
 make bench BENCH_TARGET=vllm-gke BENCH_BASE_URL=http://<service>:8000 MODEL_ID=Qwen/Qwen3-8B-AWQ
-make report RUNS="results/<vllm-run> results/<tgi-run> results/<vertex-run>"
+make report RUNS="results/<vllm-run> results/<sglang-run> results/<vertex-run>"
 make down                                                       # tear everything down
 ```
 
 ## Serving Setups
 
-### vLLM on GKE
-_TODO._ Image, args, readiness probe on model load, HPA signal, PDB, spot preemption notes.
+Both GKE stacks use the same manifests shape ([`k8s/`](k8s/), design notes in
+[`k8s/README.md`](k8s/README.md)): one replica on a Spot L4 node, selected by node labels and the
+GPU taint's toleration; `/health` startup and readiness probes, so no traffic reaches a server
+before its weights are loaded; one-at-a-time rollouts; a `maxUnavailable: 1` PDB; and an optional
+queue-depth HPA that is left out of benchmark runs. Both engines run with their defaults except a
+shared 8,192-token context limit and the Qwen3 reasoning parser.
 
-### TGI on GKE
-_TODO._
+### vLLM on GKE
+`vllm/vllm-openai:v0.31.0-cu129`, `vllm serve Qwen/Qwen3-8B-AWQ`. HPA signal:
+`vllm:num_requests_waiting`.
+
+### SGLang on GKE
+`lmsysorg/sglang:v0.5.21-runtime`, `sglang.launch_server --model-path Qwen/Qwen3-8B-AWQ
+--enable-metrics`. HPA signal: `sglang:num_queue_reqs`.
 
 ### vLLM on Vertex AI
 _TODO._ Custom container → Artifact Registry → Model Registry → Endpoint → undeploy.
@@ -71,7 +88,8 @@ _TODO._ Custom container → Artifact Registry → Model Registry → Endpoint �
 ## Benchmark Method
 
 The load generator in [`bench/`](bench/) is a small asyncio client that streams from the
-OpenAI-compatible API that vLLM, TGI and the Vertex container all expose (`python -m bench --help`).
+OpenAI-compatible API that vLLM, SGLang and the Vertex container all expose
+(`python -m bench --help`).
 
 ### Identical workload for every target
 
@@ -80,14 +98,16 @@ OpenAI-compatible API that vLLM, TGI and the Vertex container all expose (`pytho
   and `bench plot` / `bench cost` warn when the runs being compared don't match.
 - **Prompt length** is drawn from a distribution in words (`--prompt-len uniform:200,800`). The
   servers report the exact token counts, which are saved per request.
-- **No prefix-cache hits.** Each prompt starts with a unique random tag. vLLM and TGI both cache
-  shared prefixes by default, which would flatter TTFT.
+- **No prefix-cache hits.** Each prompt starts with a unique random tag. vLLM and SGLang both
+  cache shared prefixes by default, which would flatter TTFT.
 - **Output length** comes from `max_tokens` (`--output-len`), with greedy decoding
   (`temperature=0`), so the same model generates (nearly) the same lengths on every server. Actual
   output tokens are recorded per request. Server-specific options such as vLLM's `ignore_eos` can be
   passed with `--extra-body`, but only if every target in the comparison supports them.
-- **Where the client runs:** _to be documented with the GPU runs_ (plan: a small VM in the GPU
-  pool's zone, so home-network latency stays out of TTFT).
+- **Where the client runs:** in the `bench-client` pod on the cluster's CPU node pool, in the
+  same zone as the GPU node, for all three targets. Home-network latency stays out of TTFT, and
+  the client never shares a node with the server it measures. Validated on kind; the GKE runs
+  will record node and zone.
 
 ### Closed-loop load, measured at steady state
 
@@ -141,7 +161,7 @@ known step times, so TTFT, TPOT and throughput have analytic expected values. In
 | Setup | TTFT p50 | TTFT p95 | ITL p50 | Max sustained tok/s | $ / 1M output tokens |
 |---|---|---|---|---|---|
 | vLLM on GKE | — | — | — | — | — |
-| TGI on GKE | — | — | — | — | — |
+| SGLang on GKE | — | — | — | — | — |
 | vLLM on Vertex AI | — | — | — | — | — |
 
 ### What I'd recommend to a client and why
@@ -187,10 +207,12 @@ _TODO._ Will document exactly what `make down` removes and how to verify nothing
 ├── infra/terraform/
 │   ├── modules/          # network, gke, gpu node pool, artifact registry, iam
 │   └── envs/dev/         # root module, GCS remote state
-├── k8s/
-│   ├── common/           # namespace, shared config
-│   ├── vllm/             # Deployment, Service, HPA, PDB
-│   └── tgi/
+├── k8s/                  # kustomize: bases, components, envs (design notes in k8s/README.md)
+│   ├── common/           #   namespace, service account
+│   ├── vllm/, sglang/    #   Deployment, Service, PDB (+ autoscaling/ HPA component)
+│   ├── bench-client/     #   in-cluster load generator pod
+│   ├── components/       #   kind-mock: CPU mock in place of the model server
+│   └── envs/             #   kind/ (local validation) and gke/ (benchmark + autoscale shapes)
 ├── vertex/
 │   ├── container/        # custom vLLM serving image
 │   └── deploy/           # Model Registry upload, endpoint deploy/undeploy
@@ -202,13 +224,14 @@ _TODO._ Will document exactly what `make down` removes and how to verify nothing
 │   ├── mock_server.py    #   CPU-only continuous-batching mock for validation
 │   ├── smoke.py          #   checks the client against the mock's analytic timings
 │   ├── plots.py, cost.py #   charts and $ per 1M output tokens
-│   └── prices.toml       #   hourly prices with source, date and confirmed flag
+│   ├── prices.toml       #   hourly prices with source, date and confirmed flag
+│   └── Dockerfile        #   one small image: load generator + mock server
 ├── finetune/             # LoRA training + eval
 ├── results/              # saved runs — source of truth for every number
-│   └── validation/       #   load-generator validation runs against the mock
+│   └── validation/       #   mock validation runs; kind/ holds the in-cluster test sweeps
 ├── docs/postmortems/     # debugging playbook
 ├── tests/                # unit tests (no cloud)
-└── scripts/              # quota check, teardown helpers
+└── scripts/              # kind cluster + e2e checks, manifest validation and rendering
 ```
 
 ## License

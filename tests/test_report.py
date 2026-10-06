@@ -66,3 +66,16 @@ def test_run_id_is_filesystem_safe():
     run_id = make_run_id("vLLM on GKE!")
     assert run_id.endswith("_vllm-on-gke")
     assert run_id[:8].isdigit()
+
+
+def test_git_info_falls_back_to_the_commit_baked_into_the_image(monkeypatch):
+    from bench import runner
+
+    def no_git(*args, **kwargs):
+        raise FileNotFoundError("git")
+
+    monkeypatch.setattr(runner.subprocess, "run", no_git)
+    monkeypatch.setenv("BENCH_GIT_COMMIT", "abc123")
+    assert runner._git_info() == {"commit": "abc123", "dirty": None, "source": "image"}
+    monkeypatch.delenv("BENCH_GIT_COMMIT")
+    assert runner._git_info()["commit"] is None

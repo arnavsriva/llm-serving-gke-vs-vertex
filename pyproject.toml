@@ -1,21 +1,26 @@
 [project]
 name = "llm-serving-gke-vertex"
 version = "0.1.0"
-description = "Benchmarking Qwen3-8B serving on GKE (vLLM, TGI) vs. Vertex AI, plus LoRA fine-tuning."
+description = "Benchmarking Qwen3-8B serving on GKE (vLLM, SGLang) vs. Vertex AI, plus LoRA fine-tuning."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11,<3.12"
+# Runtime deps are what the container image (load generator + mock server) needs; plotting is an
+# extra so the image stays small.
 dependencies = [
     "aiohttp>=3.10",
     "numpy>=1.26",
-    "matplotlib>=3.8",
 ]
 
 [project.scripts]
 llm-bench = "bench.cli:main"
 
 [project.optional-dependencies]
+plots = [
+    "matplotlib>=3.8",
+]
 dev = [
+    "llm-serving-gke-vertex[plots]",
     "ruff>=0.6",
     "pytest>=8.0",
     "pre-commit>=3.7",

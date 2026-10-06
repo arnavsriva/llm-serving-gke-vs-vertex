@@ -1,0 +1,113 @@
+# vLLM serving Qwen3-8B-AWQ on one NVIDIA L4 (g2-standard-8 Spot node). Design notes: k8s/README.md
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm
+  labels:
+    app.kubernetes.io/name: vllm
+    app.kubernetes.io/component: inference-server
+    app.kubernetes.io/part-of: llm-serving
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  # A surge pod would need a second GPU, so replace pods one at a time instead.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vllm
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vllm
+        app.kubernetes.io/component: inference-server
+        app.kubernetes.io/part-of: llm-serving
+    spec:
+      serviceAccountName: inference
+      automountServiceAccountToken: false
+      # Spot preemption gives pods only part of a 30 s notice; see k8s/README.md.
+      terminationGracePeriodSeconds: 30
+      nodeSelector:
+        cloud.google.com/gke-accelerator: nvidia-l4
+        cloud.google.com/gke-spot: "true"
+      tolerations:
+        # GKE taints GPU nodes with this; only pods that tolerate it can run there.
+        - key: nvidia.com/gpu
+          operator: Equal
+          value: present
+          effect: NoSchedule
+      containers:
+        - name: vllm
+          # CUDA 12.9 build: the default v0.31.0 image targets CUDA 13.0, which needs an R580+
+          # NVIDIA driver. Check the GKE node driver (nvidia-smi) before switching.
+          image: vllm/vllm-openai:v0.31.0-cu129
+          command: ["vllm", "serve"]
+          args:
+            - Qwen/Qwen3-8B-AWQ
+            - --host=0.0.0.0
+            - --port=8000
+            - --max-model-len=8192
+            - --gpu-memory-utilization=0.90
+            - --reasoning-parser=qwen3
+          env:
+            - name: HF_HOME
+              value: /data/hf
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hf-token
+                  key: token
+                  optional: true  # Qwen3-8B-AWQ is not gated
+          ports:
+            - name: http
+              containerPort: 8000
+          resources:
+            requests:
+              cpu: "4"
+              memory: 20Gi
+              nvidia.com/gpu: "1"
+            limits:
+              memory: 24Gi
+              nvidia.com/gpu: "1"
+          # The API server only starts listening once the weights are downloaded and loaded, so
+          # /health doubles as a model-loaded check. Up to 30 min for download + load + compile.
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 180
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 4
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: model-cache
+              mountPath: /data
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: model-cache
+          emptyDir:
+            sizeLimit: 30Gi
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 2Gi

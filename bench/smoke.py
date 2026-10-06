@@ -31,7 +31,6 @@ from typing import Any
 import aiohttp
 
 from bench.mock_server import MockConfig
-from bench.plots import plot_runs
 from bench.report import load_run, write_csv
 from bench.runner import RunConfig, run_benchmark
 
@@ -187,6 +186,8 @@ async def run_smoke(out_dir: Path, quiet: bool = False) -> tuple[Path, list[dict
             except TimeoutError:
                 proc.kill()
                 await proc.wait()
+
+    from bench.plots import plot_runs  # needs the `plots` extra
 
     checks = validate(load_run(run_dir).rows, SMOKE_MOCK, http_rtt_ms)
     write_csv(run_dir / "validation.csv", checks, VALIDATION_COLUMNS)
